@@ -58,16 +58,20 @@ data "template_file" "user_data" {
 }
 
 resource "aws_spot_instance_request" "default" {
-  count           = local.use_spot ? 1 : 0
-  ami             = data.aws_ami.default.id
-  instance_type   = var.instance_type
-  user_data       = length(var.user_data_base64) > 0 ? var.user_data_base64 : data.template_file.user_data[0].rendered
-  security_groups = compact(concat(module.security_group.*.id, var.security_groups))
+  count                       = local.use_spot ? 1 : 0
+  ami                         = data.aws_ami.default.id
+  instance_type               = var.instance_type
+  user_data                   = length(var.user_data_base64) > 0 ? var.user_data_base64 : data.template_file.user_data[0].rendered
+  vpc_security_group_ids      = compact(concat(module.security_group.*.id, var.security_groups))
+  iam_instance_profile        = local.instance_profile
+  associate_public_ip_address = var.associate_public_ip_address
+  key_name                    = var.key_name
+  subnet_id                   = var.subnets[0]
+  monitoring                  = var.monitoring
+  disable_api_termination     = var.disable_api_termination
 
   spot_price           = var.spot_price
   wait_for_fulfillment = var.wait_for_fulfillment
-
-  key_name = var.key_name
 
   root_block_device {
     encrypted   = var.root_block_device_encrypted
@@ -86,8 +90,28 @@ resource "aws_spot_instance_request" "default" {
     }
   }
 
+  connection {
+    user = var.ssh_user
+    private_key = var.private_key
+    host = "${aws_spot_instance_request.default.public_ip}"
+  }
+
   tags = module.this.tags
+
+  // Tag will not be added. Below script will copy tags from spot request to the instance using AWS CLI.
+  // https://github.com/terraform-providers/terraform-provider-aws/issues/32
+  provisioner "file" {
+    source = "set_tags.sh"
+    destination = "home/${var.ssh_user}/set_tags.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "bash /home/${var.ssh_user}/set_tags.sh ${data.aws_region.default.name} ${aws_spot_instance_request.default.id} ${aws_spot_instance_request.default.spot_instance_id}"
+    ]
+  }
 }
+
 
 
 resource "aws_instance" "default" {

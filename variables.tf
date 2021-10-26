@@ -223,3 +223,8 @@ variable "wait_for_fulfillment" {
   description = "Terraform will wait for the Spot Request to be fulfilled, and will throw an error if the timeout of 10m is reached."
   default = false
 }
+
+variable "private_key" {
+  description = "the private key used to make a connection and execute the tags fix"
+  default = ""
+}
