@@ -93,7 +93,7 @@ resource "aws_spot_instance_request" "default" {
   connection {
     user = var.ssh_user
     private_key = var.private_key
-    host = "${aws_spot_instance_request.default.public_ip}"
+    host = "${aws_spot_instance_request.default[count.index].public_ip}"
   }
 
   tags = module.this.tags

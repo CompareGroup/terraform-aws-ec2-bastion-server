@@ -95,6 +95,18 @@ data "aws_iam_policy_document" "main" {
     effect = "Allow"
 
     actions = [
+      "ec2:DescribeSpotInstanceRequests",
+      "ec2:CreateTags",
+      "ec2:DeleteTags",
+    ]
+
+    resources = ["*"]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
       "s3:GetEncryptionConfiguration"
     ]
 
