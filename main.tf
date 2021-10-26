@@ -8,6 +8,8 @@ locals {
     replace(join("", aws_eip.default.*.public_ip), ".", "-"),
     data.aws_region.default.name == "us-east-1" ? "compute-1" : format("%s.compute", data.aws_region.default.name)
   ) : null
+  use_spot = module.this.enabled && var.spot_price != null
+  use_ondemand = module.this.enabled && var.spot_price == null
 }
 
 data "aws_region" "default" {}
@@ -54,6 +56,39 @@ data "template_file" "user_data" {
     ssh_user    = var.ssh_user
   }
 }
+
+resource "aws_spot_instance_request" "default" {
+  count           = local.use_spot ? 1 : 0
+  ami             = data.aws_ami.default.id
+  instance_type   = var.instance_type
+  user_data       = length(var.user_data_base64) > 0 ? var.user_data_base64 : data.template_file.user_data[0].rendered
+  security_groups = compact(concat(module.security_group.*.id, var.security_groups))
+
+  spot_price           = var.spot_price
+  wait_for_fulfillment = var.wait_for_fulfillment
+
+  key_name = var.key_name
+
+  root_block_device {
+    encrypted   = var.root_block_device_encrypted
+    volume_size = var.root_block_device_volume_size
+  }
+
+  # Optional block; skipped if var.ebs_block_device_volume_size is zero
+  dynamic "ebs_block_device" {
+    for_each = var.ebs_block_device_volume_size > 0 ? [1] : []
+
+    content {
+      encrypted             = var.ebs_block_device_encrypted
+      volume_size           = var.ebs_block_device_volume_size
+      delete_on_termination = var.ebs_delete_on_termination
+      device_name           = var.ebs_device_name
+    }
+  }
+
+  tags = module.this.tags
+}
+
 
 resource "aws_instance" "default" {
   #bridgecrew:skip=BC_AWS_PUBLIC_12: Skipping `EC2 Should Not Have Public IPs` check. NAT instance requires public IP.

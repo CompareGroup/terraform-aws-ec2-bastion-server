@@ -211,3 +211,15 @@ variable "instance_profile" {
   description = "A pre-defined profile to attach to the instance (default is to build our own)"
   default     = ""
 }
+
+#### CG variables
+
+variable "spot_price" {
+  description = "The max auction price to pay for bastion spot instances. Defaults to on-demand."
+  default = null
+}
+
+variable "wait_for_fulfillment" {
+  description = "Terraform will wait for the Spot Request to be fulfilled, and will throw an error if the timeout of 10m is reached."
+  default = false
+}
