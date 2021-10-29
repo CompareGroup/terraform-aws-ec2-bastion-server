@@ -96,6 +96,8 @@ data "aws_iam_policy_document" "main" {
 
     actions = [
       "ec2:DescribeSpotInstanceRequests",
+      "ec2:DescribeAddresses",
+      "ec2:AssociateAddress",
       "ec2:CreateTags",
       "ec2:DeleteTags",
     ]
