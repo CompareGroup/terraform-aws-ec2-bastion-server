@@ -25,4 +25,8 @@ else
     systemctl status amazon-ssm-agent
 fi
 
+apt update
+apt apt install python3-pip
+pip3 --version
+
 ${user_data}
