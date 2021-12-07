@@ -102,7 +102,7 @@ resource "aws_spot_instance_request" "default" {
   // https://github.com/terraform-providers/terraform-provider-aws/issues/32
   provisioner "file" {
     source = "${path.module}/set_tags.sh"
-    destination = "home/${var.ssh_user}/set_tags.sh"
+    destination = "/home/${var.ssh_user}/set_tags.sh"
   }
 
   provisioner "remote-exec" {
